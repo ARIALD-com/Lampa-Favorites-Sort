@@ -6,7 +6,7 @@ const vm = require('vm');
 
 const code = fs.readFileSync(path.join(__dirname, '..', 'lampa-favorites-sort.js'), 'utf8');
 
-function launch(locale = 'ru', initialStorage = {}) {
+function launch(locale = 'ru', initialStorage = {}, returnMenuButton = true) {
   const raw = {
     book: [
       {id: 1, type: 'movie', title: 'Ёлки', release_date: '2010-12-16'},
@@ -39,13 +39,23 @@ function launch(locale = 'ru', initialStorage = {}) {
     Activity: {active: () => active, push: p => {lastOpen = p;}},
     Listener: {follow: () => {}},
     Menu: {addButton: (icon, title, onClick) => {
-      const button = {icon, title, onClick, visible: true,
+      const button = {icon, title, onClick, visible: true, style: {display: ''},
         toggle: function (on) {this.visible=on; return this;}};
       menuButtons.push(button);
-      return button;
+      return returnMenuButton ? button : undefined;
     }}
   };
-  const sandbox = {window: {appready: true, Lampa}, Lampa, console, setTimeout: (fn) => {fn(); return 1;}, clearTimeout: () => {}, Intl, Object};
+  const document = {
+    querySelector: selector => {
+      assert.strictEqual(selector, '[data-ariald-favsort-menu]');
+      const button = menuButtons.find(item => item.icon.includes('data-ariald-favsort-menu'));
+      return button ? {closest: selector => {
+        assert.strictEqual(selector, '.menu__item');
+        return {nodeType: 1, style: button.style};
+      }} : null;
+    }
+  };
+  const sandbox = {document, window: {appready: true, Lampa}, Lampa, console, setTimeout: (fn) => {fn(); return 1;}, clearTimeout: () => {}, Intl, Object};
   vm.runInNewContext(code, sandbox);
   return {Lampa, raw, storage, params, components, manifests, translations,
     refreshes: () => refreshes, open: () => lastOpen, active, oldSnapshot, sandbox, menuButtons};
@@ -185,4 +195,28 @@ function launch(locale = 'ru', initialStorage = {}) {
   c.sandbox.window.__ariald_favorites_sort.updateMenuVisibility();
   assert.strictEqual(c.menuButtons[0].visible,false);
   console.log('PASS menu persistence across plugin reloads and dynamic re-enable');
+})();
+
+(function testMenuWithoutReturnValue() {
+  for (const initialVisibility of ['show', 'hide']) {
+    const c = launch('en', {ariald_favsort_menu: initialVisibility}, false);
+    const menu = c.params.find(p => p.param.name === 'ariald_favsort_menu');
+    assert.strictEqual(c.menuButtons.length, initialVisibility === 'show' ? 1 : 0);
+    for (let cycle = 0; cycle < 3; cycle++) {
+      menu.onChange('show');
+      assert.strictEqual(c.menuButtons.length, 1, 'Register the sidebar shortcut only once');
+      assert.strictEqual(c.menuButtons[0].style.display, '', 'Show the existing DOM element');
+      menu.onChange('hide');
+      assert.strictEqual(c.menuButtons[0].style.display, 'none', 'Hide without an API return value');
+    }
+    c.storage.ariald_favsort_menu = 'show';
+    c.sandbox.window.__ariald_favorites_sort.updateMenuVisibility();
+    assert.strictEqual(c.menuButtons[0].style.display, '');
+    assert.strictEqual(c.menuButtons.length, 1);
+    c.menuButtons[0].onClick();
+    assert.strictEqual(c.open().type, '__ariald_favorites_all__');
+    c.params.find(p => p.param.name === 'ariald_favsort_open').onChange();
+    assert.strictEqual(c.open().type, '__ariald_favorites_all__');
+  }
+  console.log('PASS menu without return value, repeated toggles and hidden startup');
 })();

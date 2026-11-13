@@ -92,6 +92,7 @@
     var collators = Object.create(null);
     var pendingRefresh = null;
     var menuButton = null;
+    var menuRegistered = false;
 
     function collator() {
       var code = language();
@@ -217,12 +218,18 @@
     }
     function updateMenuVisibility(selectedValue) {
       var visible = selectedValue === 'show' ? true : selectedValue === 'hide' ? false : menuVisible();
-      // In Lampa builds where addButton returns a jQuery element, hide/show the
-      // same button rather than removing it. This preserves remote navigation
-      // and lets the user re-enable the shortcut without reloading Lampa.
-      if (!menuButton && visible && Lampa.Menu && typeof Lampa.Menu.addButton === 'function') {
-        try { menuButton = Lampa.Menu.addButton(ICON, t('all_title'), openAll); }
-        catch (error) { console.warn('[Favorites Sort] Menu registration failed:', error); }
+      // Some clients append the item but return no handle. Mark its icon so
+      // we can recover the containing menu item without matching translated text.
+      if (!menuRegistered && visible && Lampa.Menu && typeof Lampa.Menu.addButton === 'function') {
+        try {
+          var menuIcon = ICON.replace('<svg ', '<svg data-ariald-favsort-menu="true" ');
+          menuButton = Lampa.Menu.addButton(menuIcon, t('all_title'), openAll);
+          menuRegistered = true;
+        } catch (error) { console.warn('[Favorites Sort] Menu registration failed:', error); }
+      }
+      if (!menuButton && menuRegistered && typeof document !== 'undefined') {
+        var icon = document.querySelector('[data-ariald-favsort-menu]');
+        if (icon) menuButton = icon.closest('.menu__item');
       }
       if (!menuButton) return;
       if (typeof menuButton.toggle === 'function') menuButton.toggle(visible);
