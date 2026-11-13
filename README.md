@@ -14,13 +14,12 @@ You need an existing installation of Lampa (including a compatible client such a
 1. Open **Lampa** on your TV or device.
 2. Go to **Settings → Extensions** (sometimes called **Plugins**, depending on your Lampa build).
 3. Select **Add plugin / Add extension**.
-4. Enter the installation URL provided by the publisher, for example:
+4. Enter the installation URL:
 
    ```text
-   https://YOUR_GITHUB_USERNAME.github.io/lampa-favorites-sort/lampa-favorites-sort.js
+   https://ariald-com.github.io/Lampa-Favorites-Sort/lampa-favorites-sort.js
    ```
 
-   Replace `YOUR_GITHUB_USERNAME` with the actual account name. Do not install this example address literally.
 5. Confirm the URL. Check that the plugin entry is enabled and its request status is successful (often **200**).
 6. Fully exit and reopen Lampa or the client app (for example, Luxo).
 7. Open **Settings → Favorites Sort** to set the default sorting mode and per-category overrides. In the sidebar, open **All Favorites**, if the shortcut is enabled.
@@ -36,10 +35,10 @@ If you are publishing this repository for other users:
 1. Create a **public GitHub repository**, for example `lampa-favorites-sort`.
 2. Upload all repository files, including `lampa-favorites-sort.js` to the **repository root**, along with `README.md`, `LICENSE`, and `tests/`.
 3. Open the repository's **Settings → Pages** page. Under **Build and deployment**, choose **Deploy from a branch**, select **main**, folder **/(root)**, and save.
-4. Wait until GitHub Pages shows the published website URL. Then open the following in a browser (substitute your GitHub username and repository name):
+4. Wait until GitHub Pages shows the published website URL. Then open the plugin URL in a browser:
 
    ```text
-   https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPOSITORY/lampa-favorites-sort.js
+   https://ariald-com.github.io/Lampa-Favorites-Sort/lampa-favorites-sort.js
    ```
 
 5. Verify the response shows JavaScript (it should begin with a `/*! Lampa Favorites Sort...` comment), **not an HTML 404 page**.
